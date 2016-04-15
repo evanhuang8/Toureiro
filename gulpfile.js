@@ -92,7 +92,7 @@ gulp.task('livereload', function() {
 });
 
 gulp.task('server', shell.task([
-  'nodemon -w ./lib ./server.js'
+  'nodemon -w ./lib ./examples/server.js'
 ]));
 
 gulp.task('dev', [

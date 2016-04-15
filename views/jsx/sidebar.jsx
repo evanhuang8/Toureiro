@@ -7,6 +7,7 @@ ToureiroSidebar = React.createClass({
 
   getInitialState: function() {
     var state = {
+      db: [0,1,2,3,4,5,6,7,8,9,10],
       queues: [],
       queue: undefined,
       category: undefined
@@ -75,7 +76,20 @@ ToureiroSidebar = React.createClass({
     });
   },
 
+  changeDb: function(event) {
+    var _this = this;
+    var db = $(event.target).val();
+    $.get('db/?db=' + encodeURIComponent(db), function(response) {
+      if (response.status === 'OK') {
+        console.log("Response OK");
+      } else {
+        console.log(response);
+      }
+    });
+  },
+
   changeQueue: function(event) {
+    console.log("DEBUG: Change queue");
     var _this = this;
     var queue = $(event.target).val();
     this.getQueue(queue);
@@ -100,6 +114,18 @@ ToureiroSidebar = React.createClass({
     return (
       <div id="toureiro-sidebar">
         <h4 className="header">Toureiro</h4>
+        <div name="db" onChange={this.changeDb} id="sidebar-dbs">
+          <h5>Select db:</h5>
+          <select className="form-control">
+            {
+              this.state.db.map(function(dbNumber) {
+                return (
+                  <option value={dbNumber} key={dbNumber}>db-{dbNumber}</option>
+                );
+              })
+            }
+          </select>
+        </div>
         <div id="sidebar-queues">
           <h5>Select Queue:</h5>
           <select name="queue" onChange={this.changeQueue} className="form-control">
