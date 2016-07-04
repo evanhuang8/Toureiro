@@ -138,8 +138,7 @@ var Job = React.createClass({
           <br />
           <br />
         </div>
-        <pre className="job-code">
-          <code ref="code" dangerouslySetInnerHTML={{__html: JSON.stringify(job, ['id', 'state', 'progress', 'delay', 'timestamp', 'attempts', 'opts', 'returnvalue'], 2)}} />
+        <pre className="job-code"><code ref="code" dangerouslySetInnerHTML={{__html: JSON.stringify(job, null, 2)}} />
         </pre>
       </div>
     );
