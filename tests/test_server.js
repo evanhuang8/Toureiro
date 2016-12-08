@@ -3,14 +3,14 @@ var bull = require('bull');
 var chai = require('chai');
 var expect = chai.expect;
 var Promise = require('bluebird');
-var redis = require('redis');
+var Redis = require('ioredis');
 var uuid = require('node-uuid');
 var request = require('supertest');
 
-var client = Promise.promisifyAll(redis.createClient());
+var client = new Redis();
 
 function cleanSlate() {
-  return client.keysAsync('bull:*').then(function(keys) {
+  return client.keys('bull:*').then(function(keys) {
     if (keys.length) {
       return client.del(keys);
     }

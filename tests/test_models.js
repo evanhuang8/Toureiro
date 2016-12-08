@@ -3,13 +3,13 @@ var bull = require('bull');
 var chai = require('chai');
 var expect = chai.expect;
 var Promise = require('bluebird');
-var redis = require('redis');
+var Redis = require('ioredis');
 var uuid = require('node-uuid');
 
-var client = Promise.promisifyAll(redis.createClient());
+var client = new Redis();
 
 function cleanSlate() {
-  return client.keysAsync('bull:*').then(function(keys) {
+  return client.keys('bull:*').then(function(keys) {
     if (keys.length) {
       return client.del(keys);
     }
@@ -51,35 +51,30 @@ describe('Models', function() {
   });
 
   describe('Queue', function() {
-  
+
     var Queue = require('../lib/models/queue');
 
-    beforeEach(function(done) {
-      resetData().then(function() {
-        done();
-      });
+    beforeEach(function() {
+      return resetData();
     });
 
-    it('#list()', function(done) {
-      Queue.list().then(function(keys) {
+    it('#list()', function() {
+      return Queue.list().then(function(keys) {
         expect(keys).to.be.a('array');
         expect(keys.length).to.equal(6);
-        done();
       })
     });
 
-    it('#total()', function(done) {
-      Queue.total('test queue').then(function(total) {
+    it('#total()', function() {
+      return Queue.total('test queue').then(function(total) {
         expect(parseInt(total)).to.equal(20);
-        done();
       })
     });
 
-    it('#remove()', function(done) {
-      Queue.remove('test queue').then(function() {
-        client.keysAsync('bull:test queue:*').then(function(keys) {
+    it('#remove()', function() {
+      return Queue.remove('test queue').then(function() {
+        return client.keys('bull:test queue:*').then(function(keys) {
           expect(keys.length).to.equal(0);
-          done();
         });
       });
     });
@@ -90,22 +85,20 @@ describe('Models', function() {
 
     var Job = require('../lib/models/job');
 
-    it('#get()', function(done) {
-      buildQueue('job').then(function() {
-        Job.get('job', 1).then(function(job) {
+    it('#get()', function() {
+      return buildQueue('job').then(function() {
+        return Job.get('job', 1).then(function(job) {
           expect(job).to.exist;
           expect(job.jobId).to.equal(1);
-          done();
         });
       });
     });
 
-    it('#remove()', function(done) {
-      buildQueue('job').then(function() {
-        Job.remove('job', 1).then(function() {
-          Job.get('job', 1).then(function(job) {
+    it('#remove()', function() {
+      return buildQueue('job').then(function() {
+        return Job.remove('job', 1).then(function() {
+          return Job.get('job', 1).then(function(job) {
             expect(job).to.not.exist;
-            done();
           });
         });
       });
@@ -113,31 +106,27 @@ describe('Models', function() {
 
     describe('`wait`', function() {
 
-      beforeEach(function(done) {
-        cleanSlate().then(function() {
-          buildQueue('wait').then(function() {
-            done();
-          });
+      beforeEach(function() {
+        return cleanSlate().then(function() {
+          return buildQueue('wait');
         });
       });
 
-      it('#total()', function(done) {
-        Job.total('wait', 'wait').then(function(total) {
+      it('#total()', function() {
+        return Job.total('wait', 'wait').then(function(total) {
           expect(total).to.equal(20);
-          done();
         });
       });
 
-      it('#fetch()', function(done) {
-        Job.fetch('wait', 'wait', 5, 7).then(function(jobs) {
+      it('#fetch()', function() {
+        return Job.fetch('wait', 'wait', 5, 7).then(function(jobs) {
           expect(jobs).to.be.an('array');
           expect(jobs.length).to.equal(7);
           // ids are reversed since it's LIFO
           var ids = [15, 14, 13, 12, 11, 10, 9];
           _.map(jobs, function(job) {
-            expect(ids.indexOf(job.jobId)).to.not.equal(-1);
+            expect(ids.indexOf(Number(job.jobId))).to.not.equal(-1);
           });
-          done();
         });
       });
 
@@ -145,38 +134,34 @@ describe('Models', function() {
 
     describe('`active`', function() {
 
-      beforeEach(function(done) {
-        cleanSlate().then(function() {
-          buildQueue('active').then(function(q) {
+      beforeEach(function() {
+        return cleanSlate().then(function() {
+          return buildQueue('active').then(function(q) {
             Promise.join(
               q.getNextJob(),
               q.getNextJob(),
               q.getNextJob(),
               q.getNextJob(),
               q.getNextJob()
-            ).then(function() {
-              done();
-            });
+            )
           });
         });
       });
 
-      it('#total()', function(done) {
-        Job.total('active', 'active').then(function(total) {
+      it('#total()', function() {
+        return Job.total('active', 'active').then(function(total) {
           expect(total).to.equal(5);
-          done();
         });
       });
 
-      it('#fetch()', function(done) {
-        Job.fetch('active', 'active', 1, 3).then(function(jobs) {
+      it('#fetch()', function() {
+        return Job.fetch('active', 'active', 1, 3).then(function(jobs) {
           expect(jobs).to.be.an('array');
           expect(jobs.length).to.equal(3);
           var ids = [2, 3, 4];
           _.map(jobs, function(job) {
-            expect(ids.indexOf(job.jobId)).to.not.equal(-1);
+            expect(ids.indexOf(Number(job.jobId))).to.not.equal(-1);
           });
-          done();
         });
       });
 
@@ -184,8 +169,8 @@ describe('Models', function() {
 
     describe('`delayed`', function() {
 
-      beforeEach(function(done) {
-        cleanSlate().then(function() {
+      beforeEach(function() {
+        return cleanSlate().then(function() {
           var q = createQueue('delayed');
           var promises = [];
           var i;
@@ -196,28 +181,24 @@ describe('Models', function() {
               delay: 1000 + i * 10
             }));
           }
-          Promise.all(promises).then(function() {
-            done();
-          });
+          return Promise.all(promises);
         });
       });
 
-      it('#total()', function(done) {
-        Job.total('delayed', 'delayed').then(function(total) {
+      it('#total()', function() {
+        return Job.total('delayed', 'delayed').then(function(total) {
           expect(total).to.equal(10);
-          done();
         });
       });
 
-      it('#fetch()', function(done) {
-        Job.fetch('delayed', 'delayed', 0, 4).then(function(jobs) {
+      it('#fetch()', function() {
+        return Job.fetch('delayed', 'delayed', 0, 4).then(function(jobs) {
           expect(jobs).to.be.an('array');
           expect(jobs.length).to.equal(4);
           var ids = [1, 2, 3, 4];
           _.map(jobs, function(job) {
-            expect(ids.indexOf(job.jobId)).to.not.equal(-1);
+            expect(ids.indexOf(Number(job.jobId))).to.not.equal(-1);
           });
-          done();
         });
       });
 
@@ -239,22 +220,20 @@ describe('Models', function() {
         });
       });
 
-      it('#total()', function(done) {
-        Job.total('completed', 'completed').then(function(total) {
+      it('#total()', function() {
+        return Job.total('completed', 'completed').then(function(total) {
           expect(total).to.equal(20);
-          done();
         });
       });
 
-      it('#fetch()', function(done) {
-        Job.fetch('completed', 'completed', 1, 5).then(function(jobs) {
+      it('#fetch()', function() {
+        return Job.fetch('completed', 'completed', 1, 5).then(function(jobs) {
           expect(jobs).to.be.an('array');
           expect(jobs.length).to.equal(5);
           var ids = [2, 3, 4, 5, 6];
           _.map(jobs, function(job) {
-            expect(ids.indexOf(job.jobId)).to.not.equal(-1);
+            expect(ids.indexOf(Number(job.jobId))).to.not.equal(-1);
           });
-          done();
         });
       });
 
@@ -278,22 +257,20 @@ describe('Models', function() {
         });
       });
 
-      it('#total()', function(done) {
-        Job.total('failed', 'failed').then(function(total) {
+      it('#total()', function() {
+        return Job.total('failed', 'failed').then(function(total) {
           expect(total).to.equal(20);
-          done();
         });
       });
 
-      it('#fetch()', function(done) {
-        Job.fetch('failed', 'failed', 3, 7).then(function(jobs) {
+      it('#fetch()', function() {
+        return Job.fetch('failed', 'failed', 3, 7).then(function(jobs) {
           expect(jobs).to.be.an('array');
           expect(jobs.length).to.equal(7);
           var ids = [4, 5, 6, 7, 8, 9, 10];
           _.map(jobs, function(job) {
-            expect(ids.indexOf(job.jobId)).to.not.equal(-1);
+            expect(ids.indexOf(Number(job.jobId))).to.not.equal(-1);
           });
-          done();
         });
       });
 
