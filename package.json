@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/evanhuang8/Toureiro#readme",
   "dependencies": {
-    "bluebird": "2.10.x",
+    "bluebird": "^3.4.6",
     "body-parser": "1.14.x",
     "bootstrap": "3.3.x",
     "bull": "git+https://github.com/Epharmix/bull.git#master",
@@ -32,13 +32,13 @@
     "connect-slashes": "1.3.x",
     "express": "4.13.x",
     "highlight.js": "8.8.x",
+    "ioredis": "^2.4.2",
     "jade": "1.11.x",
     "jquery": "2.1.x",
     "lodash": "3.10.x",
     "minimist": "1.2.x",
     "moment-timezone": "0.4.x",
-    "react": "0.13.x",
-    "redis": "2.1.x"
+    "react": "0.13.x"
   },
   "devDependencies": {
     "browserify": "11.2.x",
@@ -53,7 +53,7 @@
     "gulp-sourcemaps": "1.6.x",
     "gulp-uglify": "1.4.x",
     "gulp-util": "3.0.x",
-    "mocha": "2.3.x",
+    "mocha": "^3.2.0",
     "node-uuid": "1.4.x",
     "reactify": "1.1.x",
     "supertest": "2.0.x",
