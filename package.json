@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/evanhuang8/Toureiro.git"
   },
+  "engines": {
+    "node" : ">=4.2"
+  },
   "keywords": [
     "bull",
     "distributed",
